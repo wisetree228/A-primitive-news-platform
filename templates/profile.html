@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-{{title}}
+Ваш профиль
 {% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
     {% else %}
     <p class="username">Пользователь: {{data.userName}}</p>
     <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
-    <a href="{{url_for('profile')}}" class="username logout">Мой профиль</a>
+
     {% endif %}
 
 </div>
@@ -20,6 +20,8 @@
 
 
 <div class="container">
+<img src="{{url_for('static', filename='dub.jpg')}}" alt="" class="photo">
+<p class="name">Вы {{data.userName}}, и вы написали {{leng}} статей</p>
 
 {% for i in articles %}
 <div class="new">
@@ -38,6 +40,7 @@
     {% if data.userLogged %}
     <a class="add" href="{{url_for('add')}}">Добавить</a>
     {% endif %}
+    <a class="back" href="{{ url_for('index') }}">Вернуться</a>
 
 
 </div>

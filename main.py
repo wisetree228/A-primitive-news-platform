@@ -252,6 +252,25 @@ def pagenotfound(error):
     return render_template('error.html')
 
 
+
+
+
+
+@app.route('/profile')
+def profile():
+    if not data['userLogged']:
+        return redirect(url_for('login'))
+    articles=selectAllWithCondition('article', f"author='{data['userName']}'")
+    leng=len(articles)
+
+    return render_template('profile.html', data=data, articles=articles, leng=leng)
+
+
+
+
+
+
+
 users=selectAll('user')
 
 
