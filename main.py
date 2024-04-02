@@ -1,6 +1,6 @@
-from flask import Flask, render_template, url_for, request, flash, get_flashed_messages, redirect, session
+from flask import Flask, render_template, url_for, request, flash, get_flashed_messages, redirect, session, send_file
 from sqlite3 import *
-
+import base64
 
 
 
@@ -99,7 +99,7 @@ def login():
 def register():
 
     if request.method=='POST':
-        if len(request.form['username'])>3 and len(request.form['password'])>5:
+        if (len(request.form['username'])>3 and len(request.form['password'])>5) and not("'" in request.form['username'] or "'" in request.form['password']):
             username=request.form['username']
             passw=request.form['password']
             users=selectAll('user')
@@ -119,11 +119,11 @@ def register():
                 db.close()
                 data['userLogged'] = True
                 data['userName'] = username
-
                 return redirect('/')
 
+
         else:
-            flash('юзернейм должен быть длиннее 3 символов, а пароль - длиннее 5!')
+            flash('юзернейм должен быть длиннее 3 символов, а пароль - длиннее 5, также запрещено использовать одинарную кавычку в данных с целью защиты от sql иньекций')
 
     return render_template('register.html')
 
@@ -172,12 +172,7 @@ def detailview(id):
     if not check_id('article', f"id={id}"):
         return redirect('error')
 
-    # db = connect('database.db')
-    # cur = db.cursor()
-    # cur.execute(f"SELECT * FROM article WHERE id={id};")
-    # db.commit()
-    # article = cur.fetchone()
-    # db.close()
+
     article=selectOne('article', f"id={id}")
 
     return render_template('detailview.html', article=article, data=data)
@@ -252,18 +247,62 @@ def pagenotfound(error):
     return render_template('error.html')
 
 
+def check_user_image(username):
+    conn = connect('database.db')
+    cursor = conn.cursor()
+
+    # Выполнение запроса с условием WHERE и COUNT
+    cursor.execute(f"SELECT * FROM user WHERE username = '{username}' AND image IS NOT NULL")
+    result = cursor.fetchall()
+
+    conn.close()
+
+    if len(result)==0:
+        return False
+    else:
+        return True
 
 
 
 
-@app.route('/profile')
+@app.route('/profile', methods=['POST', 'GET'])
 def profile():
     if not data['userLogged']:
         return redirect(url_for('login'))
     articles=selectAllWithCondition('article', f"author='{data['userName']}'")
     leng=len(articles)
+    if request.method=='POST':
+        db = connect('database.db')
+        cur = db.cursor()
 
-    return render_template('profile.html', data=data, articles=articles, leng=leng)
+        # Получить файл из запроса
+        image_file = request.files['image']
+
+        # Если файл был передан
+        if image_file:
+            # Преобразование содержимого файла в BLOB
+            image_data = image_file.read()
+
+            # Сохранить изображение в базе данных
+            cur.execute("UPDATE user SET image = ? WHERE username = ?", (image_data, data['userName']))
+            db.commit()
+
+        db.close()
+
+
+    if check_user_image(data['userName']):
+        user = selectOne('user', f"username='{data['userName']}'")
+        db = connect('database.db')
+        cur = db.cursor()
+        cur.execute("SELECT image FROM user WHERE username = ?", (data['userName'],))
+        image_data = cur.fetchone()[0]
+        db.close()
+
+        # Декодирование и преобразование данных изображения в base64
+        img_data_base64 = base64.b64encode(image_data).decode('utf-8')
+        return render_template('profile.html', data=data, articles=articles, leng=leng, img=img_data_base64)
+    else:
+        return render_template('profile.html', data=data, articles=articles, leng=leng, img=None)
 
 
 

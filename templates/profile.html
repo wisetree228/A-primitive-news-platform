@@ -20,7 +20,16 @@
 
 
 <div class="container">
-<img src="{{url_for('static', filename='dub.jpg')}}" alt="" class="photo">
+    {% if img %}
+    <img src="data:image/jpg;base64,{{ img }}" alt="твоё фото" class="photo">
+    {% else %}
+    <img src="{{url_for('static', filename='photo.jpg')}}" alt="твоё фото" class="photo">
+    {% endif %}
+
+    <form action="" method="post" class="form-photo" enctype="multipart/form-data">
+        <label>Сменить фото профиля</label><input type="file" name="image">
+        <button type="submit" class="add addnew">Сохранить фото</button>
+    </form>
 <p class="name">Вы {{data.userName}}, и вы написали {{leng}} статей</p>
 
 {% for i in articles %}
