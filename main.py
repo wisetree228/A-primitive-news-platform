@@ -8,17 +8,22 @@ app=Flask(__name__)
 
 app.secret_key='key123456789'
 
+
+#массив адресов ссылок (потом я заменил их функцией url_for())
 urls=[
     {"name":"Добавить запись", "url":"/add"},
     {"name":"динамический просмотр", "url":"/view/<int:id>"}
 ]
 
+
+# ассоциативный массив с данными о входе пользователя и его юзернеймом
 data={
     'userLogged':False,
     'userName':'',
 }
 
 
+# вспомогательные функции для работы с базой данных в коде
 def selectAllWithCondition(table, cond):
     db = connect('database.db')
     cur = db.cursor()
@@ -67,26 +72,28 @@ def check_id(table, cond):
 
 
 
+ # обработчик страницы входа
 @app.route('/login',  methods=['POST', 'GET'])
 def login():
+     # вход в существующий аккаунт
     if request.method=='POST':
-        if len(request.form['username'])>3 and len(request.form['password'])>5:
+        if len(request.form['username'])>3 and len(request.form['password'])>5:  # проверка
             username=request.form['username']
             passw=request.form['password']
             users=selectAll('user')
             name_in_db=False
             for user in users:
-                if username in user and passw in user:
+                if username in user and passw in user:  # успешная регистрация
                     data['userLogged']=True
                     data['userName']=username
                     name_in_db=True
                     return redirect('/')
 
-                elif username in user and not(passw in user):
+                elif username in user and not(passw in user):  # неверный пароль
                     flash('Неверный пароль, повторите попытку')
                     name_in_db = True
                     break
-            if not name_in_db:
+            if not name_in_db:  # нет такой записи
                 flash('Учётной записи с таким именем нет, проведите регистрацию')
         else:
             flash('юзернейм должен быть длиннее 3 символов, а пароль - длиннее 5!')
@@ -95,23 +102,27 @@ def login():
     return render_template('log.html')
 
 
+
+
+ # обработчик страницы регистрации
+
 @app.route("/register", methods=['POST', 'GET'])
 def register():
 
     if request.method=='POST':
-        if (len(request.form['username'])>3 and len(request.form['password'])>5) and not("'" in request.form['username'] or "'" in request.form['password']):
+        if (len(request.form['username'])>3 and len(request.form['password'])>5) and not("'" in request.form['username'] or "'" in request.form['password']):  # проверка на длинну пароля, имени и запрещенного символа
             username=request.form['username']
             passw=request.form['password']
             users=selectAll('user')
             name_in_db=False
             for user in users:
-                if username in user:
+                if username in user:  # такой аккаунт уже существует
                     flash('Аккаунт с таким именем уже существует! Попробуйте другое')
                     name_in_db=True
 
 
 
-            if not name_in_db:
+            if not name_in_db:  # успешная регистрация
                 db = connect('database.db')
                 cur = db.cursor()
                 cur.execute("INSERT INTO user (username, password) VALUES (?, ?);", (username, passw))
@@ -122,7 +133,7 @@ def register():
                 return redirect('/')
 
 
-        else:
+        else:  # некорректные данные
             flash('юзернейм должен быть длиннее 3 символов, а пароль - длиннее 5, также запрещено использовать одинарную кавычку в данных с целью защиты от sql иньекций')
 
     return render_template('register.html')
@@ -131,7 +142,7 @@ def register():
 
 
 
-@app.route("/")
+@app.route("/")  # обработчик главной страницы
 def index():
     db = connect('database.db')
     cur = db.cursor()
@@ -143,12 +154,12 @@ def index():
 
     return render_template('index.html', title="news", urls=urls, articles=articles, data=data)
 
-@app.route("/add", methods=['POST', 'GET'])
+@app.route("/add", methods=['POST', 'GET'])  # обработчик страницы добавления статей
 def add():
-    if not data['userLogged']:
+    if not data['userLogged']:  # проверка входа в аккаунт
         return redirect('/')
 
-    if request.method=='POST':
+    if request.method=='POST':  # добавление
 
         if len(request.form['header']) > 3 and len(request.form['text'])>10:
 
@@ -167,9 +178,9 @@ def add():
     return render_template('add.html', data=data)
 
 
-@app.route("/view/<int:id>")
+@app.route("/view/<int:id>")  # обработчик динамического просмотра страницы
 def detailview(id):
-    if not check_id('article', f"id={id}"):
+    if not check_id('article', f"id={id}"): # если нет такой статьи, перенос на страницу ошибки 404
         return redirect('error')
 
 
@@ -177,14 +188,14 @@ def detailview(id):
 
     return render_template('detailview.html', article=article, data=data)
 
-@app.route("/delete/<int:id>")
+@app.route("/delete/<int:id>")  # обработчик удаления
 def delete(id):
-    if not check_id('article', f"id={id}"):
+    if not check_id('article', f"id={id}"): # если нет такой статьи, перенос на страницу ошибки 404
         return redirect('error')
     auth = selectOne('article', f"id={id}")[3]
     if not data['userLogged']:
         return redirect('/')
-    elif data['userName']!=auth:
+    elif data['userName']!=auth:  # нельзя удалять чужую статью
         return redirect('/')
     else:
 
@@ -196,14 +207,14 @@ def delete(id):
         drop('article', f"id={id}")
         return redirect("/")
 
-@app.route("/update/<int:id>", methods=['POST', 'GET'])
+@app.route("/update/<int:id>", methods=['POST', 'GET'])  # обработчик редактирования статей
 def update(id):
-    if not check_id('article', f"id={id}"):
+    if not check_id('article', f"id={id}"):  # если нет такой статьи, перенос на страницу ошибки 404
         return redirect('error')
     auth=selectOne('article', f"id={id}")[3]
     if not data['userLogged']:
         return redirect('/')
-    elif data['userName']!=auth:
+    elif data['userName']!=auth:   # нельзя редактировать чужую статью
         return redirect('/')
     else:
 
@@ -233,7 +244,7 @@ def update(id):
 
 
 
-@app.route('/logout')
+@app.route('/logout')  # обработчик выхода из аккаунта
 def logout():
     data['userLogged']=False
     data['userName']=''
@@ -242,16 +253,16 @@ def logout():
 
 
 
-@app.errorhandler(404)
+@app.errorhandler(404)  # обработчик неверного URL 
 def pagenotfound(error):
     return render_template('error.html')
 
 
-def check_user_image(username):
+def check_user_image(username):  # вспомогательная функция для проверки наличия картинки профиля
     conn = connect('database.db')
     cursor = conn.cursor()
 
-    # Выполнение запроса с условием WHERE и COUNT
+    
     cursor.execute(f"SELECT * FROM user WHERE username = '{username}' AND image IS NOT NULL")
     result = cursor.fetchall()
 
@@ -265,7 +276,7 @@ def check_user_image(username):
 
 
 
-@app.route('/profile', methods=['POST', 'GET'])
+@app.route('/profile', methods=['POST', 'GET'])  # обработчик страницы профиля
 def profile():
     if not data['userLogged']:
         return redirect(url_for('login'))
@@ -275,12 +286,12 @@ def profile():
         db = connect('database.db')
         cur = db.cursor()
 
-        # Получить файл из запроса
+        
         image_file = request.files['image']
 
-        # Если файл был передан
+        
         if image_file:
-            # Преобразование содержимого файла в BLOB
+            # Преобразование картинки профиля в BLOB
             image_data = image_file.read()
 
             # Сохранить изображение в базе данных
@@ -306,22 +317,6 @@ def profile():
 
 
 
-
-
-
-
-users=selectAll('user')
-
-
-for i in users:
-    print(i[0], i[1], i[2])
-
-# print(check_id('article', 'id=3'))
-# print(check_id('article', 'id=12'))
-
-
-# with app.test_request_context():
-#     print(url_for("page", user="i"))
 
 
 
