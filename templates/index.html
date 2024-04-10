@@ -14,6 +14,8 @@
     <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
     <a href="{{url_for('profile')}}" class="username logout">Мой профиль</a>
     {% endif %}
+    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
+
 
 </div>
 
@@ -27,7 +29,7 @@
     <h2 class="name auth">Автор: {{i[3]}}</h2>
     <p class="text">{{i[2]}}</p>
 
-    <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Смотреть</a>
+    <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Смотреть и читать комментарии</a>
     {% if data.userName==i[3] %}
     <a class="view-btn del" href="{{ url_for('delete', id=i[0]) }}">Удалить</a>
     <a class="view-btn upd" href="{{ url_for('update', id=i[0]) }}">Редактировать</a>

@@ -144,12 +144,8 @@ def register():
 
 @app.route("/")  # обработчик главной страницы
 def index():
-    db = connect('database.db')
-    cur = db.cursor()
-    cur.execute("SELECT * FROM article")
-    db.commit()
-    articles = cur.fetchall()
-    db.close()
+
+    articles=selectAll('article')
 
 
     return render_template('index.html', title="news", urls=urls, articles=articles, data=data)
@@ -184,9 +180,12 @@ def detailview(id):
         return redirect('error')
 
 
-    article=selectOne('article', f"id={id}")
 
-    return render_template('detailview.html', article=article, data=data)
+    article=selectOne('article', f"id={id}")
+    comments=selectAllWithCondition('comment', f"new_id={id}")
+    leng=len(comments)
+
+    return render_template('detailview.html', article=article, data=data, comments=comments, leng=leng)
 
 @app.route("/delete/<int:id>")  # обработчик удаления
 def delete(id):
@@ -198,12 +197,6 @@ def delete(id):
     elif data['userName']!=auth:  # нельзя удалять чужую статью
         return redirect('/')
     else:
-
-        # db = connect('database.db')
-        # cur = db.cursor()
-        # cur.execute(f"DELETE FROM article WHERE id={id};")
-        # db.commit()
-        # db.close()
         drop('article', f"id={id}")
         return redirect("/")
 
@@ -315,10 +308,80 @@ def profile():
     else:
         return render_template('profile.html', data=data, articles=articles, leng=leng, img=None)
 
+@app.route('/addcomment/<int:id>', methods=['POST', 'GET'])
+def add_comment(id):
+    if not data['userLogged']:
+        return redirect(url_for('login'))
+    if not check_id('article', f"id={id}"):
+        return redirect('error')
+    if request.method=='POST':
+        text=request.form['text']
+        if len(text)<5 or len(text)>5000 or "'" in text:
+            flash('комментарий должен быть больше 5 и не больше 5000 символов! запрещено использовать одинарную кавычку в целях защиты от sql иньекций!')
+        else:
+            db = connect('database.db')
+            cur = db.cursor()
+            cur.execute(f"INSERT INTO comment (new_id, author, text) VALUES (?, ?, ?);", (id, data['userName'], text))
+            db.commit()
+            db.close()
+            flash("комментарий добавлен!")
 
 
 
 
+
+
+    return render_template('addcomment.html', data=data, id=id)
+
+
+@app.route('/deletecom/<int:id>')
+def delcom(id):
+    if not check_id('comment', f"id={id}"):  # если нет такого комментария, перенос на страницу ошибки 404
+        return redirect('error')
+    auth = selectOne('comment', f"id={id}")[2]
+    if not data['userLogged']:
+        return redirect('/')
+    elif data['userName'] != auth:  # нельзя удалять чужой комментарий
+        art_id=selectOne('comment', f"id={id}")[1]
+        return redirect(url_for('detailview', id=art_id))
+    else:
+        drop('comment', f"id={id}")
+        return redirect("/")
+
+
+
+@app.route('/updatecom/<int:id>', methods=['GET', 'POST'])
+def updcom(id):
+    text = selectOne('comment', f"id={id}")[3]
+    if not check_id('comment', f"id={id}"):  # если нет такого комментария, перенос на страницу ошибки 404
+        return redirect('error')
+    auth = selectOne('comment', f"id={id}")[2]
+    if not data['userLogged']:
+        return redirect('/')
+    elif data['userName'] != auth:  # нельзя редактировать чужой комментарий
+        art_id = selectOne('comment', f"id={id}")[1]
+        return redirect(url_for('detailview', id=art_id))
+
+
+
+
+    else:
+        if request.method=='POST':
+
+            if len(text) < 5 or len(text) > 5000 or "'" in text:
+                flash(
+                    'комментарий должен быть больше 5 и не больше 5000 символов! запрещено использовать одинарную кавычку в целях защиты от sql иньекций!')
+            else:
+                db = connect('database.db')
+                cur = db.cursor()
+                cur.execute(f"UPDATE comment SET text='{request.form['text']}' WHERE id={id};")
+                db.commit()
+                db.close()
+                flash("комментарий обновлён!")
+
+
+    art_id=selectOne('comment', f"id={id}")[1]
+    return render_template('upcom.html', text=text, data=data, id=art_id)
 
 
 if __name__=="__main__":

@@ -22,6 +22,7 @@
     <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
     <a href="{{url_for('profile')}}" class="username logout">Мой профиль</a>
     {% endif %}
+    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
 
 </div>
 
@@ -34,7 +35,7 @@
         <button type="submit" class="add addnew">Сохранить запись</button>
 
     </form>
-    <a class="back" href="{{ url_for('index') }}">Вернуться</a>
+    <a class="back" href="{{ url_for('detailview', id={{id}}) }}">Вернуться</a>
 
     {% for i in get_flashed_messages() %}
     <div class="error">{{i}}</div>
