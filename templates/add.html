@@ -35,7 +35,7 @@
         <button type="submit" class="add addnew">Сохранить запись</button>
 
     </form>
-    <a class="back" href="{{ url_for('detailview', id={{id}}) }}">Вернуться</a>
+    <a class="back" href="{{ url_for('index') }}">Вернуться</a>
 
     {% for i in get_flashed_messages() %}
     <div class="error">{{i}}</div>

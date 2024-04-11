@@ -30,7 +30,10 @@
     <form action="" method="post" class="form-photo" enctype="multipart/form-data">
         <label>Сменить фото профиля</label><input type="file" name="image">
         <button type="submit" class="add addnew">Сохранить фото</button>
+
+
     </form>
+    <a href="{{ url_for('uploadimg', username=data.userName) }}" class="add prof">скачать картинку профиля</a>
 <p class="name">Вы {{data.userName}}, и вы написали {{leng}} статей</p>
 
 {% for i in articles %}

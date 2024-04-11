@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, request, flash, get_flashed_messages, redirect, session, send_file
+from flask import Flask, render_template, url_for, request, flash, get_flashed_messages, redirect, session, send_file, make_response
 from sqlite3 import *
 import base64
 
@@ -308,7 +308,7 @@ def profile():
     else:
         return render_template('profile.html', data=data, articles=articles, leng=leng, img=None)
 
-@app.route('/addcomment/<int:id>', methods=['POST', 'GET'])
+@app.route('/addcomment/<int:id>', methods=['POST', 'GET']) # добавление комментария к статье
 def add_comment(id):
     if not data['userLogged']:
         return redirect(url_for('login'))
@@ -334,7 +334,7 @@ def add_comment(id):
     return render_template('addcomment.html', data=data, id=id)
 
 
-@app.route('/deletecom/<int:id>')
+@app.route('/deletecom/<int:id>') # удаление комментария
 def delcom(id):
     if not check_id('comment', f"id={id}"):  # если нет такого комментария, перенос на страницу ошибки 404
         return redirect('error')
@@ -345,12 +345,13 @@ def delcom(id):
         art_id=selectOne('comment', f"id={id}")[1]
         return redirect(url_for('detailview', id=art_id))
     else:
+        art_id = selectOne('comment', f"id={id}")[1]
         drop('comment', f"id={id}")
-        return redirect("/")
+        return redirect(url_for('detailview', id=art_id))
 
 
 
-@app.route('/updatecom/<int:id>', methods=['GET', 'POST'])
+@app.route('/updatecom/<int:id>', methods=['GET', 'POST']) # редактирования комментария
 def updcom(id):
     text = selectOne('comment', f"id={id}")[3]
     if not check_id('comment', f"id={id}"):  # если нет такого комментария, перенос на страницу ошибки 404
@@ -362,15 +363,11 @@ def updcom(id):
         art_id = selectOne('comment', f"id={id}")[1]
         return redirect(url_for('detailview', id=art_id))
 
-
-
-
     else:
         if request.method=='POST':
 
             if len(text) < 5 or len(text) > 5000 or "'" in text:
-                flash(
-                    'комментарий должен быть больше 5 и не больше 5000 символов! запрещено использовать одинарную кавычку в целях защиты от sql иньекций!')
+                flash('комментарий должен быть больше 5 и не больше 5000 символов! запрещено использовать одинарную кавычку в целях защиты от sql иньекций!')
             else:
                 db = connect('database.db')
                 cur = db.cursor()
@@ -382,6 +379,18 @@ def updcom(id):
 
     art_id=selectOne('comment', f"id={id}")[1]
     return render_template('upcom.html', text=text, data=data, id=art_id)
+
+
+@app.route('/uploadimg/<username>') # скачивание фото профиля
+def uploadimg(username):
+    if username!=data['userName']: # нельзя скачивать чужое фото
+        return redirect(url_for('index'))
+    image_data = selectOne('user', f"username='{username}'")[3]
+    if image_data:
+        response = make_response(image_data)
+        response.headers['Content-Type'] = 'image/jpeg'
+        response.headers['Content-Disposition'] = 'attachment; filename=image.jpg'
+        return response
 
 
 if __name__=="__main__":
