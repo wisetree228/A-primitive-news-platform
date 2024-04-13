@@ -80,21 +80,18 @@ def login():
         if len(request.form['username'])>3 and len(request.form['password'])>5:  # проверка
             username=request.form['username']
             passw=request.form['password']
-            users=selectAll('user')
-            name_in_db=False
-            for user in users:
-                if username in user and passw in user:  # успешная регистрация
+
+            if not check_id('user', f"username='{username}'"):  # нет такой записи
+                flash('Учётной записи с таким именем нет, проведите регистрацию')
+            else:
+                user=selectOne('user', f"username='{username}'")
+                if user[1]==username and user[2]==passw:#успешная регистрация
                     data['userLogged']=True
                     data['userName']=username
-                    name_in_db=True
                     return redirect('/')
-
-                elif username in user and not(passw in user):  # неверный пароль
+                else:# неверный пароль
                     flash('Неверный пароль, повторите попытку')
-                    name_in_db = True
-                    break
-            if not name_in_db:  # нет такой записи
-                flash('Учётной записи с таким именем нет, проведите регистрацию')
+
         else:
             flash('юзернейм должен быть длиннее 3 символов, а пароль - длиннее 5!')
 
@@ -113,16 +110,10 @@ def register():
         if (len(request.form['username'])>3 and len(request.form['password'])>5) and not("'" in request.form['username'] or "'" in request.form['password']):  # проверка на длинну пароля, имени и запрещенного символа
             username=request.form['username']
             passw=request.form['password']
-            users=selectAll('user')
-            name_in_db=False
-            for user in users:
-                if username in user:  # такой аккаунт уже существует
-                    flash('Аккаунт с таким именем уже существует! Попробуйте другое')
-                    name_in_db=True
 
-
-
-            if not name_in_db:  # успешная регистрация
+            if check_id('user', f"username='{username}'"):
+                flash('Аккаунт с таким именем уже существует! Попробуйте другое')
+            else:  # успешная регистрация
                 db = connect('database.db')
                 cur = db.cursor()
                 cur.execute("INSERT INTO user (username, password) VALUES (?, ?);", (username, passw))
@@ -391,6 +382,9 @@ def uploadimg(username):
         response.headers['Content-Type'] = 'image/jpeg'
         response.headers['Content-Disposition'] = 'attachment; filename=image.jpg'
         return response
+    else:
+        flash('у вас нет картинки профиля')
+        return redirect(url_for('profile'))
 
 
 if __name__=="__main__":

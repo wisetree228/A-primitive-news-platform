@@ -34,6 +34,9 @@
 
     </form>
     <a href="{{ url_for('uploadimg', username=data.userName) }}" class="add prof">скачать картинку профиля</a>
+    {% for i in get_flashed_messages() %}
+    <div class="error">{{i}}</div>
+    {% endfor %}
 <p class="name">Вы {{data.userName}}, и вы написали {{leng}} статей</p>
 
 {% for i in articles %}
