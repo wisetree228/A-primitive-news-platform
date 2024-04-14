@@ -173,10 +173,11 @@ def detailview(id):
 
 
     article=selectOne('article', f"id={id}")
+    auth=article[3]
     comments=selectAllWithCondition('comment', f"new_id={id}")
     leng=len(comments)
 
-    return render_template('detailview.html', article=article, data=data, comments=comments, leng=leng)
+    return render_template('detailview.html', article=article, data=data, comments=comments, leng=leng, auth=auth)
 
 @app.route("/delete/<int:id>")  # обработчик удаления
 def delete(id):
@@ -374,8 +375,7 @@ def updcom(id):
 
 @app.route('/uploadimg/<username>') # скачивание фото профиля
 def uploadimg(username):
-    if username!=data['userName']: # нельзя скачивать чужое фото
-        return redirect(url_for('index'))
+
     image_data = selectOne('user', f"username='{username}'")[3]
     if image_data:
         response = make_response(image_data)
@@ -383,9 +383,33 @@ def uploadimg(username):
         response.headers['Content-Disposition'] = 'attachment; filename=image.jpg'
         return response
     else:
-        flash('у вас нет картинки профиля')
-        return redirect(url_for('profile'))
+        flash('у данного пользователя нет картинки профиля')
+        return redirect(url_for('otherprof', username=username))
 
+
+
+@app.route('/otherprof/<username>')
+def otherprof(username):
+    if data['userName']==username:
+        return redirect(url_for('profile'))
+    if not check_id('user', f"username='{username}'"):
+        return redirect('error')
+    articles = selectAllWithCondition('article', f"author='{username}'")
+    leng = len(articles)
+
+    if check_user_image(username):
+        user = selectOne('user', f"username='{username}'")
+        db = connect('database.db')
+        cur = db.cursor()
+        cur.execute("SELECT image FROM user WHERE username = ?", (username,))
+        image_data = cur.fetchone()[0]
+        db.close()
+
+        # Декодирование и преобразование данных изображения в base64
+        img_data_base64 = base64.b64encode(image_data).decode('utf-8')
+        return render_template('oprofile.html', data=data, articles=articles, leng=leng, img=img_data_base64, username=username)
+    else:
+        return render_template('oprofile.html', data=data, articles=articles, leng=leng, img=None, username=username)
 
 if __name__=="__main__":
     app.run(debug=True)

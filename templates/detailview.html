@@ -23,6 +23,7 @@
 
 
     <h4 class="name">{{article[1]}}</h4><br>
+    <a href="{{url_for('otherprof', username=auth)}}" class="authh">Автор: {{auth}}</a>
     <p class="text">{{article[2]}}</p>
     <a class="add detail-back" href="/">Назад</a>
     <a class="add detail-back" href="{{url_for('add_comment', id=article[0])}}">Добавить комментарий</a>

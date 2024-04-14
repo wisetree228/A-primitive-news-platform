@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-Ваш профиль
+Профиль {{username}}
 {% endblock %}
 
 {% block content %}
@@ -27,17 +27,12 @@
     <img src="{{url_for('static', filename='photo.jpg')}}" alt="твоё фото" class="photo">
     {% endif %}
 
-    <form action="" method="post" class="form-photo" enctype="multipart/form-data">
-        <label>Сменить фото профиля</label><input type="file" name="image">
-        <button type="submit" class="add addnew">Сохранить фото</button>
 
-
-    </form>
-    <a href="{{ url_for('uploadimg', username=data.userName) }}" class="add prof">скачать картинку профиля</a>
+    <a href="{{ url_for('uploadimg', username=username) }}" class="add prof">скачать картинку профиля</a>
     {% for i in get_flashed_messages() %}
     <div class="error">{{i}}</div>
     {% endfor %}
-<p class="name">Вы {{data.userName}}, и вы написали {{leng}} статей</p>
+<p class="name">{{username}} написал(-а) {{leng}} статей</p>
 
 {% for i in articles %}
 <div class="new">
@@ -46,10 +41,7 @@
     <p class="text">{{i[2]}}</p>
 
     <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Смотреть и читать комментарии</a>
-    {% if data.userName==i[3] %}
-    <a class="view-btn del" href="{{ url_for('delete', id=i[0]) }}">Удалить</a>
-    <a class="view-btn upd" href="{{ url_for('update', id=i[0]) }}">Редактировать</a>
-    {% endif %}
+
 </div>
 {% endfor %}
 
