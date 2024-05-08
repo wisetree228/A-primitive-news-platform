@@ -203,7 +203,7 @@ def update(id):
         return redirect('/')
     else:
 
-        article=selectOne('article', f"author='{data['userName']}'")
+        #article=selectOne('article', f"author='{data['userName']}'")
 
         db = connect('database.db')
         cur = db.cursor()
