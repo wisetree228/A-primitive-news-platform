@@ -18,11 +18,12 @@
     {% if not data.userLogged %}
     <a class="log" href="{{url_for('login')}}">Войти или зарегистрироваться</a>
     {% else %}
+    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
     <p class="username">Пользователь: {{data.userName}}</p>
     <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
     <a href="{{url_for('profile')}}" class="username logout">Мой профиль</a>
     {% endif %}
-    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
+    
 
 </div>
 
@@ -30,7 +31,7 @@
 <div class="container">
     <form method="post" class="form" action="">
 
-        <label>Текст:</label><textarea class="inputform" name="text">{{text}}</textarea>
+        <textarea class="inputform" name="text">{{text}}</textarea>
 
         <button type="submit" class="add addnew">Сохранить комментарий</button>
 

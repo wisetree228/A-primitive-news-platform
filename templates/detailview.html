@@ -10,11 +10,12 @@
     {% if not data.userLogged %}
     <a class="log" href="{{url_for('login')}}">Войти или зарегистрироваться</a>
     {% else %}
+    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
     <p class="username">Пользователь: {{data.userName}}</p>
     <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
     <a href="{{url_for('profile')}}" class="username logout">Мой профиль</a>
     {% endif %}
-    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
+    
 
 </div>
 
