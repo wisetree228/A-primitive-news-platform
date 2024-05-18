@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, request, flash, get_flashed_messages, redirect, session, send_file, make_response
+from flask import Flask, render_template, url_for, request, flash, get_flashed_messages, redirect, session, send_file, make_response, session
 from sqlite3 import *
 import base64
 
@@ -16,11 +16,7 @@ urls=[
 ]
 
 
-# ассоциативный массив с данными о входе пользователя и его юзернеймом
-data={
-    'userLogged':False,
-    'userName':'',
-}
+
 
 
 # вспомогательные функции для работы с базой данных в коде
@@ -86,8 +82,8 @@ def login():
             else:
                 user=selectOne('user', f"username='{username}'")
                 if user[1]==username and user[2]==passw:#успешная регистрация
-                    data['userLogged']=True
-                    data['userName']=username
+                    session['userLogged']=True
+                    session['userName']=username
                     return redirect('/')
                 else:# неверный пароль
                     flash('Неверный пароль, повторите попытку')
@@ -119,8 +115,8 @@ def register():
                 cur.execute("INSERT INTO user (username, password) VALUES (?, ?);", (username, passw))
                 db.commit()
                 db.close()
-                data['userLogged'] = True
-                data['userName'] = username
+                session['userLogged'] = True
+                session['userName'] = username
                 return redirect('/')
 
 
@@ -139,11 +135,11 @@ def index():
     articles=selectAll('article')
 
 
-    return render_template('index.html', title="news", urls=urls, articles=articles, data=data)
+    return render_template('index.html', title="news", urls=urls, articles=articles, session=session)
 
 @app.route("/add", methods=['POST', 'GET'])  # обработчик страницы добавления статей
 def add():
-    if not data['userLogged']:  # проверка входа в аккаунт
+    if not session['userLogged']:  # проверка входа в аккаунт
         return redirect('/')
 
     if request.method=='POST':  # добавление
@@ -153,7 +149,7 @@ def add():
 
             db = connect('database.db')
             cur = db.cursor()
-            cur.execute(f"INSERT INTO article (name, text, author) VALUES (?, ?, ?);", (request.form['header'], request.form['text'], data['userName']))
+            cur.execute(f"INSERT INTO article (name, text, author) VALUES (?, ?, ?);", (request.form['header'], request.form['text'], session['userName']))
             db.commit()
             db.close()
 
@@ -162,7 +158,7 @@ def add():
             flash('ошибка, некорректные данные')
 
 
-    return render_template('add.html', data=data)
+    return render_template('add.html', session=session)
 
 
 @app.route("/view/<int:id>")  # обработчик динамического просмотра страницы
@@ -177,16 +173,16 @@ def detailview(id):
     comments=selectAllWithCondition('comment', f"new_id={id}")
     leng=len(comments)
 
-    return render_template('detailview.html', article=article, data=data, comments=comments, leng=leng, auth=auth)
+    return render_template('detailview.html', article=article, session=session, comments=comments, leng=leng, auth=auth)
 
 @app.route("/delete/<int:id>")  # обработчик удаления
 def delete(id):
     if not check_id('article', f"id={id}"): # если нет такой статьи, перенос на страницу ошибки 404
         return redirect('error')
     auth = selectOne('article', f"id={id}")[3]
-    if not data['userLogged']:
+    if not session['userLogged']:
         return redirect('/')
-    elif data['userName']!=auth:  # нельзя удалять чужую статью
+    elif session['userName']!=auth:  # нельзя удалять чужую статью
         return redirect('/')
     else:
         drop('article', f"id={id}")
@@ -197,13 +193,13 @@ def update(id):
     if not check_id('article', f"id={id}"):  # если нет такой статьи, перенос на страницу ошибки 404
         return redirect('error')
     auth=selectOne('article', f"id={id}")[3]
-    if not data['userLogged']:
+    if not session['userLogged']:
         return redirect('/')
-    elif data['userName']!=auth:   # нельзя редактировать чужую статью
+    elif session['userName']!=auth:   # нельзя редактировать чужую статью
         return redirect('/')
     else:
 
-        #article=selectOne('article', f"author='{data['userName']}'")
+        #article=selectOne('article', f"author='{session['userName']}'")
 
         db = connect('database.db')
         cur = db.cursor()
@@ -225,14 +221,14 @@ def update(id):
             else:
                 flash('ошибка, некорректные данные')
 
-    return render_template('update.html', article=article, data=data)
+    return render_template('update.html', article=article, session=session)
 
 
 
 @app.route('/logout')  # обработчик выхода из аккаунта
 def logout():
-    data['userLogged']=False
-    data['userName']=''
+    session['userLogged']=False
+    session['userName']=''
     return redirect('/')
 
 
@@ -263,9 +259,9 @@ def check_user_image(username):  # вспомогательная функция
 
 @app.route('/profile', methods=['POST', 'GET'])  # обработчик страницы профиля
 def profile():
-    if not data['userLogged']:
+    if not session['userLogged']:
         return redirect(url_for('login'))
-    articles=selectAllWithCondition('article', f"author='{data['userName']}'")
+    articles=selectAllWithCondition('article', f"author='{session['userName']}'")
     leng=len(articles)
     if request.method=='POST':
         db = connect('database.db')
@@ -280,29 +276,29 @@ def profile():
             image_data = image_file.read()
 
             # Сохранить изображение в базе данных
-            cur.execute("UPDATE user SET image = ? WHERE username = ?", (image_data, data['userName']))
+            cur.execute("UPDATE user SET image = ? WHERE username = ?", (image_data, session['userName']))
             db.commit()
 
         db.close()
 
 
-    if check_user_image(data['userName']):
-        user = selectOne('user', f"username='{data['userName']}'")
+    if check_user_image(session['userName']):
+        user = selectOne('user', f"username='{session['userName']}'")
         db = connect('database.db')
         cur = db.cursor()
-        cur.execute("SELECT image FROM user WHERE username = ?", (data['userName'],))
+        cur.execute("SELECT image FROM user WHERE username = ?", (session['userName'],))
         image_data = cur.fetchone()[0]
         db.close()
 
         # Декодирование и преобразование данных изображения в base64
         img_data_base64 = base64.b64encode(image_data).decode('utf-8')
-        return render_template('profile.html', data=data, articles=articles, leng=leng, img=img_data_base64)
+        return render_template('profile.html', session=session, articles=articles, leng=leng, img=img_data_base64)
     else:
-        return render_template('profile.html', data=data, articles=articles, leng=leng, img=None)
+        return render_template('profile.html', session=session, articles=articles, leng=leng, img=None)
 
 @app.route('/addcomment/<int:id>', methods=['POST', 'GET']) # добавление комментария к статье
 def add_comment(id):
-    if not data['userLogged']:
+    if not session['userLogged']:
         return redirect(url_for('login'))
     if not check_id('article', f"id={id}"):
         return redirect('error')
@@ -313,7 +309,7 @@ def add_comment(id):
         else:
             db = connect('database.db')
             cur = db.cursor()
-            cur.execute(f"INSERT INTO comment (new_id, author, text) VALUES (?, ?, ?);", (id, data['userName'], text))
+            cur.execute(f"INSERT INTO comment (new_id, author, text) VALUES (?, ?, ?);", (id, session['userName'], text))
             db.commit()
             db.close()
             flash("комментарий добавлен!")
@@ -323,7 +319,7 @@ def add_comment(id):
 
 
 
-    return render_template('addcomment.html', data=data, id=id)
+    return render_template('addcomment.html', session=session, id=id)
 
 
 @app.route('/deletecom/<int:id>') # удаление комментария
@@ -331,9 +327,9 @@ def delcom(id):
     if not check_id('comment', f"id={id}"):  # если нет такого комментария, перенос на страницу ошибки 404
         return redirect('error')
     auth = selectOne('comment', f"id={id}")[2]
-    if not data['userLogged']:
+    if not session['userLogged']:
         return redirect('/')
-    elif data['userName'] != auth:  # нельзя удалять чужой комментарий
+    elif session['userName'] != auth:  # нельзя удалять чужой комментарий
         art_id=selectOne('comment', f"id={id}")[1]
         return redirect(url_for('detailview', id=art_id))
     else:
@@ -349,9 +345,9 @@ def updcom(id):
     if not check_id('comment', f"id={id}"):  # если нет такого комментария, перенос на страницу ошибки 404
         return redirect('error')
     auth = selectOne('comment', f"id={id}")[2]
-    if not data['userLogged']:
+    if not session['userLogged']:
         return redirect('/')
-    elif data['userName'] != auth:  # нельзя редактировать чужой комментарий
+    elif session['userName'] != auth:  # нельзя редактировать чужой комментарий
         art_id = selectOne('comment', f"id={id}")[1]
         return redirect(url_for('detailview', id=art_id))
 
@@ -370,7 +366,7 @@ def updcom(id):
 
 
     art_id=selectOne('comment', f"id={id}")[1]
-    return render_template('upcom.html', text=text, data=data, id=art_id)
+    return render_template('upcom.html', text=text, session=session, id=art_id)
 
 
 @app.route('/uploadimg/<username>') # скачивание фото профиля
@@ -390,7 +386,7 @@ def uploadimg(username):
 
 @app.route('/otherprof/<username>')
 def otherprof(username):
-    if data['userName']==username:
+    if session['userName']==username:
         return redirect(url_for('profile'))
     if not check_id('user', f"username='{username}'"):
         return redirect('error')
@@ -407,9 +403,14 @@ def otherprof(username):
 
         # Декодирование и преобразование данных изображения в base64
         img_data_base64 = base64.b64encode(image_data).decode('utf-8')
-        return render_template('oprofile.html', data=data, articles=articles, leng=leng, img=img_data_base64, username=username)
+        return render_template('oprofile.html', session=session, articles=articles, leng=leng, img=img_data_base64, username=username)
     else:
-        return render_template('oprofile.html', data=data, articles=articles, leng=leng, img=None, username=username)
+        return render_template('oprofile.html', session=session, articles=articles, leng=leng, img=None, username=username)
+
+
+
+
+
 
 if __name__=="__main__":
     app.run(debug=True)

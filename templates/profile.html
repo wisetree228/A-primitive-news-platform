@@ -7,11 +7,11 @@
 {% block content %}
 
 <div class="menu">
-    {% if not data.userLogged %}
+    {% if not session.userLogged %}
     <a class="log" href="{{url_for('login')}}">Войти или зарегистрироваться</a>
     {% else %}
     <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
-    <p class="username">Пользователь: {{data.userName}}</p>
+    <p class="username">Пользователь: {{session.userName}}</p>
     <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
     <a href="{{url_for('profile')}}" class="username logout">Мой профиль</a>
     {% endif %}
@@ -34,11 +34,11 @@
 
 
     </form>
-    <a href="{{ url_for('uploadimg', username=data.userName) }}" class="add prof">скачать картинку профиля</a>
+    <a href="{{ url_for('uploadimg', username=session.userName) }}" class="add prof">скачать картинку профиля</a>
     {% for i in get_flashed_messages() %}
     <div class="error">{{i}}</div>
     {% endfor %}
-    <p class="name">Вы {{data.userName}}, и вы написали {{leng}} статей</p>
+    <p class="name">Вы {{session.userName}}, и вы написали {{leng}} статей</p>
 
 {% for i in articles %}
 <div class="new">
@@ -47,14 +47,14 @@
     <p class="text">{{i[2]}}</p>
 
     <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Смотреть и читать комментарии</a>
-    {% if data.userName==i[3] %}
+    {% if session.userName==i[3] %}
     <a class="view-btn del" href="{{ url_for('delete', id=i[0]) }}">Удалить</a>
     <a class="view-btn upd" href="{{ url_for('update', id=i[0]) }}">Редактировать</a>
     {% endif %}
 </div>
 {% endfor %}
 
-    {% if data.userLogged %}
+    {% if session.userLogged %}
     <a class="add" href="{{url_for('add')}}">Добавить</a>
     {% endif %}
    

@@ -7,13 +7,13 @@
 {% block content %}
 
 <div class="menu" id="menu">
-    {% if not data.userLogged %}
+    {% if not session.userLogged %}
     <a class="log" href="{{url_for('login')}}">Войти или зарегистрироваться</a>
     {% else %}
     <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
     <a class="username logout" href="{{url_for('add')}}">Добавить запись</a>
     <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
-    <a href="{{url_for('profile')}}" class="username logout">Мой профиль: {{data.userName}}</a>
+    <a href="{{url_for('profile')}}" class="username logout">Мой профиль: {{session.userName}}</a>
     {% endif %}
     
 
@@ -30,7 +30,7 @@
     <p class="text">{{i[2]}}</p>
 
     <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Смотреть и читать комментарии</a>
-    {% if data.userName==i[3] %}
+    {% if session.userName==i[3] %}
     <a class="view-btn del" href="{{ url_for('delete', id=i[0]) }}">Удалить</a>
     <a class="view-btn upd" href="{{ url_for('update', id=i[0]) }}">Редактировать</a>
     {% endif %}
