@@ -186,6 +186,7 @@ def delete(id):
         return redirect('/')
     else:
         drop('article', f"id={id}")
+        drop('comment', f"new_id={id}")
         return redirect("/")
 
 @app.route("/update/<int:id>", methods=['POST', 'GET'])  # обработчик редактирования статей
