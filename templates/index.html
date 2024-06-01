@@ -8,17 +8,17 @@
 
 <div class="menu" id="menu">
     {% if not session.userLogged %}
-    <a class="log" href="{{url_for('login')}}">Войти или зарегистрироваться</a>
+    <a class="log" href="{{url_for('login')}}">Log in or register</a>
     {% else %}
-    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
-    <a class="username logout" href="{{url_for('add')}}">Добавить запись</a>
-    <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
-    <a href="{{url_for('profile')}}" class="username logout">Мой профиль: {{session.userName}}</a>
+    <a href="{{url_for('index')}}" class="username logout">Home page</a>
+    <a class="username logout" href="{{url_for('add')}}">Add an article</a>
+    <a href="{{url_for('logout')}}" class="username logout">Logout</a>
+    <a href="{{url_for('profile')}}" class="username logout">My profile: {{session.userName}}</a>
     {% endif %}
     
 
 </div>
-<a class="vverx" href="#menu">вверх</a>
+<a class="vverx" href="#menu">Up</a>
 
 
 <div class="container">
@@ -26,13 +26,13 @@
 {% for i in articles %}
 <div class="new">
     <h4 class="name">{{i[1]}}</h4><br>
-    <h2 class="name auth">Автор: {{i[3]}}</h2>
+    <h2 class="name auth">Author: {{i[3]}}</h2>
     <p class="text">{{i[2]}}</p>
 
-    <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Смотреть и читать комментарии</a>
+    <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Watch and read comments</a>
     {% if session.userName==i[3] %}
-    <a class="view-btn del" href="{{ url_for('delete', id=i[0]) }}">Удалить</a>
-    <a class="view-btn upd" href="{{ url_for('update', id=i[0]) }}">Редактировать</a>
+    <a class="view-btn del" href="{{ url_for('delete', id=i[0]) }}">Delete</a>
+    <a class="view-btn upd" href="{{ url_for('update', id=i[0]) }}">Edit</a>
     {% endif %}
     
 </div>

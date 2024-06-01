@@ -1,19 +1,19 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-Профиль {{username}}
+Profile {{username}}
 {% endblock %}
 
 {% block content %}
 
 <div class="menu">
     {% if not session.userLogged %}
-    <a class="log" href="{{url_for('login')}}">Войти или зарегистрироваться</a>
+    <a class="log" href="{{url_for('login')}}">Login or register</a>
     {% else %}
-    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
-    <p class="username">Пользователь: {{session.userName}}</p>
-    <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
-    <a href="{{url_for('profile')}}" class="username logout">Мой профиль</a>
+    <a href="{{url_for('index')}}" class="username logout">Home page</a>
+    <p class="username">User: {{session.userName}}</p>
+    <a href="{{url_for('logout')}}" class="username logout">Logout</a>
+    <a href="{{url_for('profile')}}" class="username logout">My profile</a>
     {% endif %}
     
 
@@ -28,19 +28,19 @@
     {% endif %}
 
 
-    <a href="{{ url_for('uploadimg', username=username) }}" class="add prof">скачать картинку профиля</a>
+    <a href="{{ url_for('uploadimg', username=username) }}" class="add prof">download profile page</a>
     {% for i in get_flashed_messages() %}
     <div class="error">{{i}}</div>
     {% endfor %}
-<p class="name">{{username}} написал(-а) {{leng}} статей</p>
+<p class="name">{{username}} wrote {{leng}} articles</p>
 
 {% for i in articles %}
 <div class="new">
     <h4 class="name">{{i[1]}}</h4><br>
-    <h2 class="name auth">Автор: {{i[3]}}</h2>
+    <h2 class="name auth">Author: {{i[3]}}</h2>
     <p class="text">{{i[2]}}</p>
 
-    <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Смотреть и читать комментарии</a>
+    <a class="view-btn" href="{{ url_for('detailview', id=i[0]) }}">Watch and read comments</a>
 
 </div>
 {% endfor %}

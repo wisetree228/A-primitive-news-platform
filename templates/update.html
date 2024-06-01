@@ -2,7 +2,7 @@
 {% block title %}
 
 
-Редактировать новость
+Edit an article
 
 
 {% endblock %}
@@ -16,12 +16,12 @@
 
 <div class="menu">
     {% if not session.userLogged %}
-    <a class="log" href="{{url_for('login')}}">Войти или зарегистрироваться</a>
+    <a class="log" href="{{url_for('login')}}">Log in or register</a>
     {% else %}
-    <a href="{{url_for('index')}}" class="username logout">Главная страница</a>
-    <p class="username">Пользователь: {{session.userName}}</p>
-    <a href="{{url_for('logout')}}" class="username logout">Выйти из аккаунта</a>
-    <a href="{{url_for('profile')}}" class="username logout">Мой профиль</a>
+    <a href="{{url_for('index')}}" class="username logout">Home page</a>
+    <p class="username">User: {{session.userName}}</p>
+    <a href="{{url_for('logout')}}" class="username logout">Logout</a>
+    <a href="{{url_for('profile')}}" class="username logout">My profile</a>
     {% endif %}
     
 
@@ -33,10 +33,10 @@
         <p><input type="text" name="header" class="inputform inputname" value="{{ article[1] }}"></p><br>
         <textarea class="inputform" name="text">{{ article[2] }}</textarea>
 
-        <button type="submit" class="add addnew">Сохранить запись</button>
+        <button type="submit" class="add addnew">Save</button>
 
     </form>
-    <a class="back" href="{{ url_for('index') }}">Вернуться</a>
+    <a class="back" href="{{ url_for('index') }}">Go back</a>
 
     {% for i in get_flashed_messages() %}
     <div class="error">{{i}}</div>

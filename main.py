@@ -19,7 +19,7 @@ urls=[
 
 
 
-# вспомогательные функции для работы с базой данных в коде
+# functions for work with database
 def selectAllWithCondition(table, cond):
     db = connect('database.db')
     cur = db.cursor()
@@ -68,28 +68,28 @@ def check_id(table, cond):
 
 
 
- # обработчик страницы входа
+ # login page handler
 @app.route('/login',  methods=['POST', 'GET'])
 def login():
-     # вход в существующий аккаунт
+     # sign in
     if request.method=='POST':
-        if len(request.form['username'])>3 and len(request.form['password'])>5:  # проверка
+        if len(request.form['username'])>3 and len(request.form['password'])>5:  # check length
             username=request.form['username']
             passw=request.form['password']
 
-            if not check_id('user', f"username='{username}'"):  # нет такой записи
-                flash('Учётной записи с таким именем нет, проведите регистрацию')
+            if not check_id('user', f"username='{username}'"):  # does that account exist?
+                flash("That account doesn't exist!" )
             else:
                 user=selectOne('user', f"username='{username}'")
-                if user[1]==username and user[2]==passw:#успешная регистрация
+                if user[1]==username and user[2]==passw:  # ok log in your account
                     session['userLogged']=True
                     session['userName']=username
                     return redirect('/')
-                else:# неверный пароль
-                    flash('Неверный пароль, повторите попытку')
+                else:# incorrect assword
+                    flash('Incorrect password!')
 
         else:
-            flash('юзернейм должен быть длиннее 3 символов, а пароль - длиннее 5!')
+            flash('The username must be longer than 3 characters, and the password must be longer than 5!')
 
 
     return render_template('log.html')
@@ -97,18 +97,18 @@ def login():
 
 
 
- # обработчик страницы регистрации
+ # registration page handler
 
 @app.route("/register", methods=['POST', 'GET'])
 def register():
 
     if request.method=='POST':
-        if (len(request.form['username'])>3 and len(request.form['password'])>5) and not("'" in request.form['username'] or "'" in request.form['password']):  # проверка на длинну пароля, имени и запрещенного символа
+        if (len(request.form['username'])>3 and len(request.form['password'])>5) and not("'" in request.form['username'] or "'" in request.form['password']):  # checking for length and forbidden symbols
             username=request.form['username']
             passw=request.form['password']
 
-            if check_id('user', f"username='{username}'"):
-                flash('Аккаунт с таким именем уже существует! Попробуйте другое')
+            if check_id('user', f"username='{username}'"): #if that account exist
+                flash('That account already exists!')
             else:  # успешная регистрация
                 db = connect('database.db')
                 cur = db.cursor()
@@ -120,8 +120,8 @@ def register():
                 return redirect('/')
 
 
-        else:  # некорректные данные
-            flash('юзернейм должен быть длиннее 3 символов, а пароль - длиннее 5, также запрещено использовать одинарную кавычку в данных с целью защиты от sql иньекций')
+        else:  # incorrect data
+            flash("The username must be longer than 3 characters, and the password must be longer than 5, it is also prohibited to use ' to protect against sql injections")
 
     return render_template('register.html')
 
@@ -129,7 +129,7 @@ def register():
 
 
 
-@app.route("/")  # обработчик главной страницы
+@app.route("/")  # main page handler
 def index():
 
     articles=selectAll('article')
@@ -137,14 +137,14 @@ def index():
 
     return render_template('index.html', title="news", urls=urls, articles=articles, session=session)
 
-@app.route("/add", methods=['POST', 'GET'])  # обработчик страницы добавления статей
+@app.route("/add", methods=['POST', 'GET'])  # handler for adding articles page
 def add():
-    if not session['userLogged']:  # проверка входа в аккаунт
+    if not session['userLogged']:  # account login verification
         return redirect('/')
 
-    if request.method=='POST':  # добавление
+    if request.method=='POST':  # add
 
-        if len(request.form['header']) > 3 and len(request.form['text'])>10:
+        if len(request.form['header']) > 3 and len(request.form['text'])>10: #checking for correct data
 
 
             db = connect('database.db')
@@ -153,17 +153,17 @@ def add():
             db.commit()
             db.close()
 
-            flash(f"все ок, статья {request.form['header']} добавлена")
+            flash(f"Article '{request.form['header']}' is added!")
         else:
-            flash('ошибка, некорректные данные')
+            flash('Error, incorrect data')
 
 
     return render_template('add.html', session=session)
 
 
-@app.route("/view/<int:id>")  # обработчик динамического просмотра страницы
+@app.route("/view/<int:id>")  # dynamic page view handler
 def detailview(id):
-    if not check_id('article', f"id={id}"): # если нет такой статьи, перенос на страницу ошибки 404
+    if not check_id('article', f"id={id}"): # if there is no such article, transfer to the 404 error page
         return redirect('error')
 
 
@@ -175,28 +175,28 @@ def detailview(id):
 
     return render_template('detailview.html', article=article, session=session, comments=comments, leng=leng, auth=auth)
 
-@app.route("/delete/<int:id>")  # обработчик удаления
+@app.route("/delete/<int:id>")  # deleting handler
 def delete(id):
-    if not check_id('article', f"id={id}"): # если нет такой статьи, перенос на страницу ошибки 404
+    if not check_id('article', f"id={id}"): # if there is no such article, transfer to the 404 error page
         return redirect('error')
     auth = selectOne('article', f"id={id}")[3]
     if not session['userLogged']:
         return redirect('/')
-    elif session['userName']!=auth:  # нельзя удалять чужую статью
+    elif session['userName']!=auth:  # You can't delete someone else's article
         return redirect('/')
     else:
         drop('article', f"id={id}")
         drop('comment', f"new_id={id}")
         return redirect("/")
 
-@app.route("/update/<int:id>", methods=['POST', 'GET'])  # обработчик редактирования статей
+@app.route("/update/<int:id>", methods=['POST', 'GET'])  # article editing handler
 def update(id):
-    if not check_id('article', f"id={id}"):  # если нет такой статьи, перенос на страницу ошибки 404
+    if not check_id('article', f"id={id}"):  # if there is no such article, transfer to the 404 error page
         return redirect('error')
     auth=selectOne('article', f"id={id}")[3]
     if not session['userLogged']:
         return redirect('/')
-    elif session['userName']!=auth:   # нельзя редактировать чужую статью
+    elif session['userName']!=auth:   # You can't edit someone else's article
         return redirect('/')
     else:
 
@@ -210,7 +210,7 @@ def update(id):
         db.close()
         if request.method == 'POST':
 
-            if len(request.form['header']) > 3 and len(request.form['text']) > 10:
+            if len(request.form['header']) > 3 and len(request.form['text']) > 10:#checking for correct data
 
                 db = connect('database.db')
                 cur = db.cursor()
@@ -218,15 +218,15 @@ def update(id):
                 db.commit()
                 db.close()
 
-                flash(f"все ок, статья '{request.form['header']}' обновлена")
+                flash(f"Ok, article '{request.form['header']}' edited!")
             else:
-                flash('ошибка, некорректные данные')
+                flash('error, incorrect data')
 
     return render_template('update.html', article=article, session=session)
 
 
 
-@app.route('/logout')  # обработчик выхода из аккаунта
+@app.route('/logout')  # logout handler
 def logout():
     session['userLogged']=False
     session['userName']=''
@@ -235,12 +235,12 @@ def logout():
 
 
 
-@app.errorhandler(404)  # обработчик неверного URL 
+@app.errorhandler(404)  # invalid URL handler
 def pagenotfound(error):
     return render_template('error.html')
 
 
-def check_user_image(username):  # вспомогательная функция для проверки наличия картинки профиля
+def check_user_image(username):  # helper function for checking the presence of a profile picture
     conn = connect('database.db')
     cursor = conn.cursor()
 
@@ -252,13 +252,12 @@ def check_user_image(username):  # вспомогательная функция
 
     if len(result)==0:
         return False
-    else:
-        return True
+    return True
 
 
 
 
-@app.route('/profile', methods=['POST', 'GET'])  # обработчик страницы профиля
+@app.route('/profile', methods=['POST', 'GET'])  # profile page handler
 def profile():
     if not session['userLogged']:
         return redirect(url_for('login'))
@@ -273,10 +272,10 @@ def profile():
 
         
         if image_file:
-            # Преобразование картинки профиля в BLOB
+            # Converting a profile picture to a BLOB
             image_data = image_file.read()
 
-            # Сохранить изображение в базе данных
+            # Save image to database
             cur.execute("UPDATE user SET image = ? WHERE username = ?", (image_data, session['userName']))
             db.commit()
 
@@ -291,13 +290,13 @@ def profile():
         image_data = cur.fetchone()[0]
         db.close()
 
-        # Декодирование и преобразование данных изображения в base64
+        # Decoding and converting image data to base64
         img_data_base64 = base64.b64encode(image_data).decode('utf-8')
         return render_template('profile.html', session=session, articles=articles, leng=leng, img=img_data_base64)
     else:
         return render_template('profile.html', session=session, articles=articles, leng=leng, img=None)
 
-@app.route('/addcomment/<int:id>', methods=['POST', 'GET']) # добавление комментария к статье
+@app.route('/addcomment/<int:id>', methods=['POST', 'GET']) # adding a comment to an article
 def add_comment(id):
     if not session['userLogged']:
         return redirect(url_for('login'))
@@ -306,14 +305,14 @@ def add_comment(id):
     if request.method=='POST':
         text=request.form['text']
         if len(text)<5 or len(text)>5000 or "'" in text:
-            flash('комментарий должен быть больше 5 и не больше 5000 символов! запрещено использовать одинарную кавычку в целях защиты от sql иньекций!')
+            flash("The comment must be more than 5 and no more than 5000 characters! It is forbidden to use ' in order to protect against sql injections!")
         else:
             db = connect('database.db')
             cur = db.cursor()
             cur.execute(f"INSERT INTO comment (new_id, author, text) VALUES (?, ?, ?);", (id, session['userName'], text))
             db.commit()
             db.close()
-            flash("комментарий добавлен!")
+            flash("comment is added!!")
 
 
 
@@ -323,14 +322,14 @@ def add_comment(id):
     return render_template('addcomment.html', session=session, id=id)
 
 
-@app.route('/deletecom/<int:id>') # удаление комментария
+@app.route('/deletecom/<int:id>') # deleting a comment
 def delcom(id):
-    if not check_id('comment', f"id={id}"):  # если нет такого комментария, перенос на страницу ошибки 404
+    if not check_id('comment', f"id={id}"):  # if there is no such comment, transfer to the 404 error page
         return redirect('error')
     auth = selectOne('comment', f"id={id}")[2]
     if not session['userLogged']:
         return redirect('/')
-    elif session['userName'] != auth:  # нельзя удалять чужой комментарий
+    elif session['userName'] != auth:  # You can't delete someone else's comment
         art_id=selectOne('comment', f"id={id}")[1]
         return redirect(url_for('detailview', id=art_id))
     else:
@@ -340,37 +339,37 @@ def delcom(id):
 
 
 
-@app.route('/updatecom/<int:id>', methods=['GET', 'POST']) # редактирования комментария
+@app.route('/updatecom/<int:id>', methods=['GET', 'POST']) # editing a comment
 def updcom(id):
     text = selectOne('comment', f"id={id}")[3]
-    if not check_id('comment', f"id={id}"):  # если нет такого комментария, перенос на страницу ошибки 404
+    if not check_id('comment', f"id={id}"):  # if there is no such comment, transfer to the 404 error page
         return redirect('error')
     auth = selectOne('comment', f"id={id}")[2]
     if not session['userLogged']:
         return redirect('/')
-    elif session['userName'] != auth:  # нельзя редактировать чужой комментарий
+    elif session['userName'] != auth:  # You can't edit someone else's comment
         art_id = selectOne('comment', f"id={id}")[1]
         return redirect(url_for('detailview', id=art_id))
 
     else:
         if request.method=='POST':
 
-            if len(text) < 5 or len(text) > 5000 or "'" in text:
-                flash('комментарий должен быть больше 5 и не больше 5000 символов! запрещено использовать одинарную кавычку в целях защиты от sql иньекций!')
+            if len(text) < 5 or len(text) > 5000 or "'" in text:#checking for correct data!
+                flash("The comment must be more than 5 and no more than 5000 characters! It is forbidden to use ' in order to protect against sql injections!")
             else:
                 db = connect('database.db')
                 cur = db.cursor()
                 cur.execute(f"UPDATE comment SET text='{request.form['text']}' WHERE id={id};")
                 db.commit()
                 db.close()
-                flash("комментарий обновлён!")
+                flash("the comment is edited!")
 
 
     art_id=selectOne('comment', f"id={id}")[1]
     return render_template('upcom.html', text=text, session=session, id=art_id)
 
 
-@app.route('/uploadimg/<username>') # скачивание фото профиля
+@app.route('/uploadimg/<username>') # download profile photo
 def uploadimg(username):
 
     image_data = selectOne('user', f"username='{username}'")[3]
@@ -380,16 +379,16 @@ def uploadimg(username):
         response.headers['Content-Disposition'] = 'attachment; filename=image.jpg'
         return response
     else:
-        flash('у данного пользователя нет картинки профиля')
+        flash('This user does not have a profile picture')
         return redirect(url_for('otherprof', username=username))
 
 
 
-@app.route('/otherprof/<username>')
+@app.route('/otherprof/<username>') # someone else's profile page
 def otherprof(username):
     if session['userName']==username:
         return redirect(url_for('profile'))
-    if not check_id('user', f"username='{username}'"):
+    if not check_id('user', f"username='{username}'"): #if that user doesn't exist
         return redirect('error')
     articles = selectAllWithCondition('article', f"author='{username}'")
     leng = len(articles)
@@ -402,7 +401,7 @@ def otherprof(username):
         image_data = cur.fetchone()[0]
         db.close()
 
-        # Декодирование и преобразование данных изображения в base64
+
         img_data_base64 = base64.b64encode(image_data).decode('utf-8')
         return render_template('oprofile.html', session=session, articles=articles, leng=leng, img=img_data_base64, username=username)
     else:
